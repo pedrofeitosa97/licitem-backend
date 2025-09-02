@@ -1,26 +1,55 @@
-import { Injectable } from '@nestjs/common';
-import { UpdateAuthDto } from './dto/update-auth.dto';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { FirebaseService } from '../firebase/firebase.service';
+import axios from 'axios';
 
 @Injectable()
 export class AuthService {
-  create(createAuthDto) {
-    console.log(createAuthDto);
-    return 'This action adds a new auth';
+  constructor(private readonly firebaseService: FirebaseService) {}
+
+  async register(email: string, password: string, username: string) {
+    const auth = this.firebaseService.getAuth();
+    try {
+      const user = await auth.createUser({
+        email,
+        password,
+        displayName: username,
+      });
+      return {
+        uid: user.uid,
+        username: user.displayName,
+        email: user.email,
+        createdAt: user.metadata.creationTime,
+      };
+    } catch (error) {
+      throw new BadRequestException({ message: error.message });
+    }
   }
 
-  findAll() {
-    return `This action returns all auth`;
-  }
+  async login(email: string, password: string) {
+    const auth = this.firebaseService.getAuth();
 
-  findOne(id: number) {
-    return `This action returns a #${id} auth`;
-  }
+    try {
+      console.log(process.env.FIREBASE_API_KEY);
+      const apiKey = process.env.FIREBASE_API_KEY;
+      const url = `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${apiKey}`;
 
-  update(id: number, updateAuthDto: UpdateAuthDto) {
-    return `This action updates a #${id} auth`;
-  }
+      const response = await axios.post(url, {
+        email,
+        password,
+        returnSecureToken: true,
+      });
 
-  remove(id: number) {
-    return `This action removes a #${id} auth`;
+      return {
+        uid: response.data.localId,
+        idToken: response.data.idToken,
+        refreshToken: response.data.refreshToken,
+      };
+    } catch (err) {
+      throw new UnauthorizedException('Email ou senha inválidos');
+    }
   }
 }
