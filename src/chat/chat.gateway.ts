@@ -35,7 +35,6 @@ export class ChatGateway
   ) {
     client.join(roomId);
 
-    // Envia histórico de mensagens apenas uma vez
     const messages: Message[] = await this.messagesService.getMessages(roomId);
     client.emit('roomHistory', messages);
   }

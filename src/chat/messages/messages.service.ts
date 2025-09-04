@@ -67,7 +67,6 @@ export class MessagesService {
       createdAt: new Date().toISOString(),
     };
 
-    // ⚡ Emit em tempo real
     this.server?.to(roomId).emit('message', messageData);
 
     return messageData;
