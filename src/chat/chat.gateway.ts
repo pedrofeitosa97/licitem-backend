@@ -14,12 +14,10 @@ import { MessagesService, Message } from './messages/messages.service';
 export class ChatGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
-  private server: Server;
-
   constructor(private readonly messagesService: MessagesService) {}
 
   afterInit(server: Server) {
-    this.server = server;
+    this.messagesService.setServer(server);
   }
 
   handleConnection(client: Socket) {
@@ -37,23 +35,8 @@ export class ChatGateway
   ) {
     client.join(roomId);
 
+    // Envia histórico de mensagens apenas uma vez
     const messages: Message[] = await this.messagesService.getMessages(roomId);
     client.emit('roomHistory', messages);
-  }
-
-  @SubscribeMessage('sendMessage')
-  async handleSendMessage(
-    @MessageBody() data: { roomId: string; sender: string; content: string },
-  ) {
-    const { roomId, sender, content } = data;
-    if (!sender || !content) return;
-
-    const message = await this.messagesService.addMessage(
-      roomId,
-      sender,
-      content,
-    );
-
-    this.server.to(roomId).emit('message', message);
   }
 }

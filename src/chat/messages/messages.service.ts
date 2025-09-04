@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { FirebaseService } from '../../firebase/firebase.service';
+import { Server } from 'socket.io';
 
 export interface Message {
   id: string;
@@ -11,7 +12,13 @@ export interface Message {
 
 @Injectable()
 export class MessagesService {
+  private server!: Server;
+
   constructor(private readonly firebaseService: FirebaseService) {}
+
+  setServer(server: Server) {
+    this.server = server;
+  }
 
   private get firestore() {
     return this.firebaseService.getFirestore();
@@ -52,12 +59,17 @@ export class MessagesService {
       createdAt: new Date().toISOString(),
     });
 
-    return {
+    const messageData: Message = {
       id: msgRef.id,
       roomId,
       sender,
       content,
       createdAt: new Date().toISOString(),
     };
+
+    // ⚡ Emit em tempo real
+    this.server?.to(roomId).emit('message', messageData);
+
+    return messageData;
   }
 }
