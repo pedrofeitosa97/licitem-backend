@@ -25,8 +25,12 @@ src/
 │   ├── messages.service.ts
 │   └── entities
 ├── chat
+│   ├── messages
+│   ├── rooms
+└── chat.gateway.ts
 │   └── chat.gateway.ts
 └── main.ts
+└── app.module.ts
 ```
 
 Fluxo de Autenticação (Firebase):
