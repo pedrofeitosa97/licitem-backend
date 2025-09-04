@@ -1,9 +1,7 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
-import { MessagesModule } from './messages/messages.module';
-import { RoomsModule } from './rooms/rooms.module';
+import { MessagesModule } from './chat/messages/messages.module';
+import { RoomsModule } from './chat/rooms/rooms.module';
 import { FirebaseService } from './firebase/firebase.service';
 import { FirebaseModule } from './firebase/firebase.module';
 import { ConfigModule } from '@nestjs/config';
@@ -18,7 +16,7 @@ import { ConfigModule } from '@nestjs/config';
     MessagesModule,
     FirebaseModule,
   ],
-  controllers: [AppController],
-  providers: [AppService, FirebaseService],
+  controllers: [],
+  providers: [FirebaseService],
 })
 export class AppModule {}

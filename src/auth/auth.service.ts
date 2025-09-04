@@ -33,7 +33,6 @@ export class AuthService {
     const auth = this.firebaseService.getAuth();
 
     try {
-      console.log(process.env.FIREBASE_API_KEY);
       const apiKey = process.env.FIREBASE_API_KEY;
       const url = `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${apiKey}`;
 
@@ -43,10 +42,15 @@ export class AuthService {
         returnSecureToken: true,
       });
 
+      const uid = response.data.localId;
+
+      const userRecord = await auth.getUser(uid);
+
       return {
-        uid: response.data.localId,
+        uid: userRecord.uid,
         idToken: response.data.idToken,
         refreshToken: response.data.refreshToken,
+        displayName: userRecord.displayName,
       };
     } catch (err) {
       throw new UnauthorizedException('Email ou senha inválidos');
