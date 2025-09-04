@@ -1,23 +1,22 @@
-import { Controller, Post, Body, Get, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Body, Param } from '@nestjs/common';
 import { RoomsService } from './rooms.service';
-import { RoomDto } from './dto/room.dto';
 
 @Controller('rooms')
 export class RoomsController {
   constructor(private readonly roomsService: RoomsService) {}
 
   @Post()
-  create(@Body('name') name: string): RoomDto {
+  createRoom(@Body('name') name: string) {
     return this.roomsService.createRoom(name);
   }
 
   @Get()
-  list(): RoomDto[] {
+  getRooms() {
     return this.roomsService.getRooms();
   }
 
   @Delete(':id')
-  delete(@Param('id') id: string) {
-    return { deleted: id };
+  deleteRoom(@Param('id') roomId: string) {
+    return this.roomsService.deleteRoom(roomId);
   }
 }

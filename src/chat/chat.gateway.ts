@@ -21,7 +21,7 @@ export class ChatGateway
 
   afterInit() {
     console.log('WebSocket Gateway inicializado');
-    this.messagesService.setServer(this.server);
+    // this.messagesService.setServer(this.server);
   }
 
   handleConnection(client: Socket) {
@@ -40,13 +40,16 @@ export class ChatGateway
 
   // REMOVIDO o addMessage daqui para não duplicar
   @SubscribeMessage('sendMessage')
-  handleSendMessage(
+  async handleSendMessage(
     @MessageBody() data: { roomId: string; user: string; message: string },
   ) {
-    // Apenas loga no gateway, não adiciona de novo
-    console.log(
-      `Mensagem recebida pelo socket para sala ${data.roomId}:`,
-      data,
+    const msg = await this.messagesService.addMessage(
+      data.roomId,
+      data.user,
+      data.message,
     );
+
+    this.server.to(data.roomId).emit('message', msg);
+    console.log(`Mensagem emitida para a sala ${data.roomId}`, msg);
   }
 }

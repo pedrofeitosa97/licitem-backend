@@ -1,37 +1,38 @@
 import { Injectable } from '@nestjs/common';
-import { RoomDto } from './dto/room.dto';
-
-interface Room {
-  id: string;
-  name: string;
-  users: string[];
-}
+import { FirebaseService } from '../../firebase/firebase.service';
 
 @Injectable()
 export class RoomsService {
-  private rooms: Room[] = [];
+  constructor(private readonly firebaseService: FirebaseService) {}
 
-  createRoom(name: string): RoomDto {
-    const room = { id: Date.now().toString(), name, users: [] };
-    this.rooms.push(room);
-    return { ...room };
+  private get firestore() {
+    return this.firebaseService.getFirestore();
   }
 
-  getRooms(): RoomDto[] {
-    return this.rooms.map((r) => ({ ...r }));
+  async createRoom(name: string) {
+    const roomRef = this.firestore.collection('rooms').doc();
+    await roomRef.set({
+      name,
+      createdAt: new Date().toISOString(),
+    });
+    return { id: roomRef.id, name };
   }
 
-  addUser(roomId: string, username: string) {
-    const room = this.rooms.find((r) => r.id === roomId);
-    if (room && !room.users.includes(username)) {
-      room.users.push(username);
-    }
+  async getRooms() {
+    const snapshot = await this.firestore.collection('rooms').get();
+    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
   }
 
-  removeUser(roomId: string, username: string) {
-    const room = this.rooms.find((r) => r.id === roomId);
-    if (room) {
-      room.users = room.users.filter((u) => u !== username);
-    }
+  async deleteRoom(roomId: string) {
+    const roomRef = this.firestore.collection('rooms').doc(roomId);
+    const messagesRef = roomRef.collection('messages');
+
+    const messagesSnapshot = await messagesRef.get();
+    const batch = this.firestore.batch();
+    messagesSnapshot.docs.forEach((doc) => batch.delete(doc.ref));
+    batch.delete(roomRef);
+    await batch.commit();
+
+    return { id: roomId };
   }
 }
