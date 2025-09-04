@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import * as admin from 'firebase-admin';
-import serviceAccount from '../../licitem-3016d-firebase-adminsdk-fbsvc-c03b4219b0.json';
 
 @Injectable()
 export class FirebaseService {
@@ -11,7 +10,7 @@ export class FirebaseService {
     if (!admin.apps.length) {
       admin.initializeApp({
         credential: admin.credential.cert(
-          serviceAccount as admin.ServiceAccount,
+          process.env.FIREBASE_ADMIN_SDK as admin.ServiceAccount,
         ),
       });
     }
