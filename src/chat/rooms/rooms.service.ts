@@ -15,24 +15,27 @@ export class RoomsService {
       name,
       createdAt: new Date().toISOString(),
     });
+
     return { id: roomRef.id, name };
   }
 
   async getRooms() {
-    const snapshot = await this.firestore.collection('rooms').get();
-    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    const roomsSnap = await this.firestore.collection('rooms').get();
+    return roomsSnap.docs.map((doc) => ({
+      id: doc.id,
+      ...(doc.data() as any),
+    }));
   }
 
   async deleteRoom(roomId: string) {
     const roomRef = this.firestore.collection('rooms').doc(roomId);
-    const messagesRef = roomRef.collection('messages');
+    const roomSnap = await roomRef.get();
 
-    const messagesSnapshot = await messagesRef.get();
-    const batch = this.firestore.batch();
-    messagesSnapshot.docs.forEach((doc) => batch.delete(doc.ref));
-    batch.delete(roomRef);
-    await batch.commit();
+    if (!roomSnap.exists) {
+      throw new Error('Room not found');
+    }
 
-    return { id: roomId };
+    await roomRef.delete();
+    return { id: roomId, deleted: true };
   }
 }

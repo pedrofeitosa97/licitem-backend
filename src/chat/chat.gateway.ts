@@ -2,54 +2,58 @@ import {
   WebSocketGateway,
   SubscribeMessage,
   MessageBody,
-  WebSocketServer,
+  ConnectedSocket,
   OnGatewayInit,
   OnGatewayConnection,
   OnGatewayDisconnect,
 } from '@nestjs/websockets';
-import { Server, Socket } from 'socket.io';
-import { MessagesService } from './messages/messages.service';
+import { Socket, Server } from 'socket.io';
+import { MessagesService, Message } from './messages/messages.service';
 
-@WebSocketGateway({ cors: true })
+@WebSocketGateway({ cors: { origin: '*' } })
 export class ChatGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
-  @WebSocketServer()
-  server: Server;
+  private server: Server;
 
   constructor(private readonly messagesService: MessagesService) {}
 
-  afterInit() {
-    console.log('WebSocket Gateway inicializado');
-    // this.messagesService.setServer(this.server);
+  afterInit(server: Server) {
+    this.server = server;
   }
 
   handleConnection(client: Socket) {
-    console.log(`Cliente conectado: ${client.id}`);
+    console.log(`Client connected: ${client.id}`);
   }
 
   handleDisconnect(client: Socket) {
-    console.log(`Cliente desconectado: ${client.id}`);
+    console.log(`Client disconnected: ${client.id}`);
   }
 
   @SubscribeMessage('joinRoom')
-  handleJoinRoom(client: Socket, roomId: string) {
+  async handleJoinRoom(
+    @MessageBody() roomId: string,
+    @ConnectedSocket() client: Socket,
+  ) {
     client.join(roomId);
-    console.log(`Cliente ${client.id} entrou na sala ${roomId}`);
+
+    const messages: Message[] = await this.messagesService.getMessages(roomId);
+    client.emit('roomHistory', messages);
   }
 
-  // REMOVIDO o addMessage daqui para não duplicar
   @SubscribeMessage('sendMessage')
   async handleSendMessage(
-    @MessageBody() data: { roomId: string; user: string; message: string },
+    @MessageBody() data: { roomId: string; sender: string; content: string },
   ) {
-    const msg = await this.messagesService.addMessage(
-      data.roomId,
-      data.user,
-      data.message,
+    const { roomId, sender, content } = data;
+    if (!sender || !content) return;
+
+    const message = await this.messagesService.addMessage(
+      roomId,
+      sender,
+      content,
     );
 
-    this.server.to(data.roomId).emit('message', msg);
-    console.log(`Mensagem emitida para a sala ${data.roomId}`, msg);
+    this.server.to(roomId).emit('message', message);
   }
 }
