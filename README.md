@@ -55,3 +55,171 @@ Registro e login de usuários usando Firebase.
 Geração e validação de tokens idToken.
 Envio de mensagens via REST + broadcast em tempo real via Socket.IO.
 Arquitetura modularizada (Auth, Messages, Chat, Firebase).
+
+Base URL:
+
+    http://localhost:3000
+
+------------------------------------------------------------------------
+
+## 🔹 Rooms
+
+### ➕ Criar sala
+
+**POST** `/rooms`
+
+**Body (JSON):**
+
+``` json
+{
+  "name": "Sala de Teste"
+}
+```
+
+**Response (200):**
+
+``` json
+{
+  "id": "abc123",
+  "name": "Sala de Teste",
+  "createdAt": "2025-09-05T18:20:00.000Z"
+}
+```
+
+------------------------------------------------------------------------
+
+### 📋 Listar salas
+
+**GET** `/rooms`
+
+**Response (200):**
+
+``` json
+[
+  {
+    "id": "abc123",
+    "name": "Sala de Teste",
+    "createdAt": "2025-09-05T18:20:00.000Z"
+  },
+  {
+    "id": "def456",
+    "name": "Outra sala",
+    "createdAt": "2025-09-05T18:21:00.000Z"
+  }
+]
+```
+
+------------------------------------------------------------------------
+
+### ❌ Deletar sala
+
+**DELETE** `/rooms/:id`
+
+Exemplo:
+
+    DELETE /rooms/abc123
+
+**Response (200):**
+
+``` json
+{ "message": "Sala removida com sucesso." }
+```
+
+------------------------------------------------------------------------
+
+## 🔹 Messages
+
+### ➕ Enviar mensagem
+
+**POST** `/messages`
+
+**Body (JSON):**
+
+``` json
+{
+  "roomId": "abc123",
+  "sender": "Pedro",
+  "content": "Olá, mundo!"
+}
+```
+
+**Response (200):**
+
+``` json
+{
+  "id": "msg789",
+  "roomId": "abc123",
+  "sender": "Pedro",
+  "content": "Olá, mundo!",
+  "createdAt": "2025-09-05T18:22:00.000Z"
+}
+```
+
+------------------------------------------------------------------------
+
+### 📋 Listar mensagens da sala
+
+**GET** `/messages/:roomId`
+
+Exemplo:
+
+    GET /messages/abc123
+
+**Response (200):**
+
+``` json
+[
+  {
+    "id": "msg789",
+    "roomId": "abc123",
+    "sender": "Pedro",
+    "content": "Olá, mundo!",
+    "createdAt": "2025-09-05T18:22:00.000Z"
+  },
+  {
+    "id": "msg790",
+    "roomId": "abc123",
+    "sender": "Maria",
+    "content": "Oi, Pedro!",
+    "createdAt": "2025-09-05T18:23:00.000Z"
+  }
+]
+```
+
+------------------------------------------------------------------------
+
+## 🔹 WebSockets (tempo real)
+
+Conexão via Socket.io:
+
+    ws://localhost:3000
+
+### Eventos
+
+-   `joinRoom` → cliente entra em uma sala
+
+    ``` json
+    "roomId"
+    ```
+
+-   `roomHistory` → servidor envia histórico da sala
+
+    ``` json
+    [
+      { "id": "msg1", "roomId": "abc123", "sender": "Pedro", "content": "Oi!", "createdAt": "..." }
+    ]
+    ```
+
+-   `sendMessage` → cliente envia mensagem
+
+    ``` json
+    { "roomId": "abc123", "sender": "Pedro", "content": "Olá!" }
+    ```
+
+-   `message` → servidor envia mensagem nova em tempo real
+
+    ``` json
+    { "id": "msg2", "roomId": "abc123", "sender": "Pedro", "content": "Olá!", "createdAt": "..." }
+    ```
+
+
